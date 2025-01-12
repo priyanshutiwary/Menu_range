@@ -23,6 +23,8 @@ interface OrderPreviewProps {
 
 export function OrderPreview({ isOpen, onClose, items, tableId, onConfirm }: OrderPreviewProps) {
   const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
+  
+  
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

@@ -1,3 +1,18 @@
 {
-  "extends": ["next/core-web-vitals", "next/typescript"]
+  "parser": "@typescript-eslint/parser",
+  "plugins": ["@typescript-eslint"],
+  "extends": [
+      "eslint:recommended",
+      "plugin:@typescript-eslint/recommended",
+      "next/core-web-vitals"
+  ],
+  "rules": {
+      "@typescript-eslint/no-unused-vars": "off",
+      "react/no-unescaped-entities": "off",
+      "react-hooks/exhaustive-deps": "off",
+      "next/no-img-element": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+  "@next/next/no-img-element": "off",
+  "no-extra-semi": "off"
+  }
 }

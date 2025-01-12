@@ -34,8 +34,9 @@ export const authOptions:NextAuthOptions = {
                             )
                         )
                         .execute();
-                    console.log("Fetched user:", user);
+                    
                     const foundUser = user[0]
+                    
                     if(!foundUser){
                         throw new Error('No user found with this email')
                     }
@@ -50,7 +51,7 @@ export const authOptions:NextAuthOptions = {
                     
                     if (isPasswordCorrect){
                         
-                        return user
+                        return user[0]
                     }else{
                         throw new Error("please check password")
                     }
@@ -78,6 +79,8 @@ export const authOptions:NextAuthOptions = {
 
             }
             
+            
+            
             return session
         },
         async jwt({token, user}){
@@ -86,6 +89,8 @@ export const authOptions:NextAuthOptions = {
                 token.isVerified = user.isVerified;
                 token.name = user.name
             }
+            
+            
             return token
         },
     },

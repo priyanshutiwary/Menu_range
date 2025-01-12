@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useCallback, useEffect } from 'react'
-import { MenuSection, MenuTheme, Table, MenuItem } from '@/lib/validations/menu'
+import { MenuSection, MenuTheme, Table, MenuItem } from '@/types/MenuTypes'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { PlusCircle, MinusCircle, ChevronDown, ChevronUp, Receipt } from 'lucide-react'
@@ -30,10 +30,19 @@ interface MenuPreviewProps {
 }
 
 export default function MenuPreview({ sections, theme, tables, onPlaceOrder }: MenuPreviewProps) {
-  const [expandedSections, setExpandedSections] = useState<string[]>(sections.map(s => s.id))
+  const sortedSections = [...sections].sort((a, b) => {
+    // Handle undefined displayOrder by treating them as highest number (displayed last)
+    const orderA = a.displayOrder ?? Number.MAX_SAFE_INTEGER;
+    const orderB = b.displayOrder ?? Number.MAX_SAFE_INTEGER;
+    return orderA - orderB;
+  });
+  const [expandedSections, setExpandedSections] = useState<string[]>(sortedSections.map(s => s.id))
   const [orderItems, setOrderItems] = useState<OrderItem[]>([])
   const [selectedTable, setSelectedTable] = useState<string>('')
   const [showOrderPreview, setShowOrderPreview] = useState(false)
+
+ 
+
 
   const getMenuStyle = () => ({
     fontFamily: theme.fontFamily,
@@ -131,7 +140,7 @@ export default function MenuPreview({ sections, theme, tables, onPlaceOrder }: M
 
   const handleConfirmOrder = () => {
     const order = {
-      id: Math.random().toString(36).substr(2, 9),
+      id: '',
       tableId: selectedTable,
       items: orderItems,
       total: calculateTotal(),
@@ -182,7 +191,7 @@ export default function MenuPreview({ sections, theme, tables, onPlaceOrder }: M
           <SelectContent>
             {tables.map((table) => (
               <SelectItem key={table.id} value={table.id}>
-                {table.name} (Seats: {table.seats})
+                {table.table_number} Table: {table.tableNumber},(Capacity:{table.seatingCapacity})
               </SelectItem>
             ))}
           </SelectContent>
@@ -190,7 +199,9 @@ export default function MenuPreview({ sections, theme, tables, onPlaceOrder }: M
       </div>
       <div className="flex-1 overflow-hidden">
         <ScrollArea className="h-full pb-40">
-          {sections.map((section) => (
+        {sortedSections.map((section) => (
+
+          // {sections.map((section) => (
             <motion.div
               key={section.id}
               initial={{ opacity: 0, y: 20 }}
@@ -230,7 +241,7 @@ export default function MenuPreview({ sections, theme, tables, onPlaceOrder }: M
                       gap: theme.itemSpacing,
                     }}
                   >
-                    {section.items.map((item) => (
+                    {Array.isArray(section.items) && section.items.length > 0 ? section.items.map((item) => (
                       <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
@@ -240,13 +251,14 @@ export default function MenuPreview({ sections, theme, tables, onPlaceOrder }: M
                           backgroundColor: theme.secondaryColor,
                           padding: '1rem',
                           borderRadius: theme.borderRadius,
+                          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
                         }}
                         className={getCardStyle()}
                       >
-                        {item.photoUrl && (
+                        {item.imageUrl && (
                           <div style={{ position: 'relative', width: '100%', height: '150px', marginBottom: '1rem' }}>
                             <Image
-                              src={item.photoUrl}
+                              src={item.imageUrl}
                               alt={item.name}
                               fill
                               style={{ objectFit: 'cover', borderRadius: theme.borderRadius }}
@@ -292,12 +304,15 @@ export default function MenuPreview({ sections, theme, tables, onPlaceOrder }: M
                           </Button>
                         </div>
                       </motion.div>
-                    ))}
+                    )) : (
+                      <p>No items available</p>
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>
             </motion.div>
           ))}
+          
         </ScrollArea>
       </div>
       <motion.div

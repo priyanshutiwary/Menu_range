@@ -17,10 +17,12 @@ export const restaurants = pgTable('restaurants', {
     id: serial('id').primaryKey(),
     userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }),
     name: varchar('name', { length: 200 }).notNull(),
-    ownerName: varchar('owner_name', { length: 100 }).notNull(),
+    ownerName: varchar('owner_name', { length: 100 }),
     location: text('location').notNull(),
-    phoneNumber: varchar('phone_number', { length: 20 }).notNull(),
-    cuisineType: varchar('cuisine_type', { length: 50 }).notNull(),
+    phoneNumber: varchar('phone_number', { length: 20 }),
+    cuisineType: varchar('cuisine_type', { length: 50 }),
+    isPublic: boolean().default(false), // Flag indicating if the restaurant is publicly visible (defaults to false)
+    subDomain: varchar('sub_domain', { length: 100 }).unique(),
     createdAt: timestamp('created_at', { withTimezone: true }).default(sql`CURRENT_TIMESTAMP`),
     updatedAt: timestamp('updated_at', { withTimezone: true }).default(sql`CURRENT_TIMESTAMP`),
 });
@@ -30,7 +32,7 @@ export const menuSections = pgTable('menu_sections', {
     restaurantId: integer('restaurant_id').references(() => restaurants.id, { onDelete: 'cascade' }),
     name: varchar('name', { length: 100 }).notNull(),
     description: text('description'),
-    displayOrder: integer('display_order').notNull(),
+    displayOrder: integer('display_order'),
     createdAt: timestamp('created_at', { withTimezone: true }).default(sql`CURRENT_TIMESTAMP`),
     updatedAt: timestamp('updated_at', { withTimezone: true }).default(sql`CURRENT_TIMESTAMP`),
 });
@@ -42,7 +44,8 @@ export const menuItems = pgTable('menu_items', {
     description: text('description'),
     price: decimal('price', { precision: 10, scale: 2 }).notNull(),
     imageUrl: varchar('image_url', { length: 255 }),
-    isAvailable: boolean('is_available').default(true),
+    imageFileId: varchar('image_file_id', { length: 255 }), // Store the fileId
+    isAvailable: varchar('is_available', { length: 20 }).default('Available').notNull(),
     displayOrder: integer('display_order').notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).default(sql`CURRENT_TIMESTAMP`),
     updatedAt: timestamp('updated_at', { withTimezone: true }).default(sql`CURRENT_TIMESTAMP`),
@@ -51,9 +54,9 @@ export const menuItems = pgTable('menu_items', {
 export const restaurantTables = pgTable('restaurant_tables', {
     id: serial('id').primaryKey(),
     restaurantId: integer('restaurant_id').references(() => restaurants.id, { onDelete: 'cascade' }),
-    tableNumber: varchar('table_number', { length: 20 }).notNull(),
+    tableNumber: integer('table_number').notNull(),
     seatingCapacity: integer('seating_capacity').notNull(),
-    isAvailable: boolean('is_available').default(true),
+    isAvailable: varchar('is_available', { length: 20 }).default('Available').notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).default(sql`CURRENT_TIMESTAMP`),
 }, (table) => ({
     uniqueConstraint: uniqueIndex('unique_table_per_restaurant').on(table.restaurantId, table.tableNumber),
@@ -72,7 +75,8 @@ export const orders = pgTable('orders', {
 export const orderItems = pgTable('order_items', {
     id: serial('id').primaryKey(),
     orderId: integer('order_id').references(() => orders.id, { onDelete: 'cascade' }),
-    menuItemId: integer('menu_item_id').references(() => menuItems.id),
+    // menuItemId: integer('menu_item_id').references(() => menuItems.id),
+    itemName: text('item_name').notNull(), // Correct way to define a text column
     quantity: integer('quantity').notNull(),
     unitPrice: decimal('unit_price', { precision: 10, scale: 2 }).notNull(),
     subtotal: decimal('subtotal', { precision: 10, scale: 2 }).notNull(),

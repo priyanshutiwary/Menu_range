@@ -61,7 +61,7 @@ const OTPVerification = () => {
           title: 'OTP Verified',
           description: "OTP verification is successful for your account",
         })
-        router.replace('login')
+        router.replace('/login')
       }
     } catch (error) {
       const axiosError = error as AxiosError<ApiResponse>

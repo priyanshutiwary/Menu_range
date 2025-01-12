@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
       const updatedUser = await db
         .update(users)
         .set({
-          name,
+          name:name,
           passwordHash: await bcrypt.hash(password, 10),
           verifyCode:verificationCode,
           verifyCodeExpiry:verifyCodeExpiry,

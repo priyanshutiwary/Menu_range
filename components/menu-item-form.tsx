@@ -24,6 +24,7 @@ const formSchema = z.object({
   description: z.string().optional(),
   price: z.number().min(0, 'Price must be positive'),
   photoUrl: z.string().optional(),
+  displayOrder: z.number().optional(),
 })
 
 type FormData = z.infer<typeof formSchema>
@@ -44,6 +45,7 @@ export function MenuItemForm({ initialData, onSubmit, onCancel }: MenuItemFormPr
       description: '',
       price: 0,
       photoUrl: '',
+      displayOrder: 0,
     },
   })
 
@@ -51,7 +53,9 @@ export function MenuItemForm({ initialData, onSubmit, onCancel }: MenuItemFormPr
     try {
       setIsLoading(true)
       await onSubmit(data)
-      form.reset()
+      if (!initialData) {
+        form.reset()
+      }
     } catch (error) {
       toast.error('Something went wrong')
       console.error(error)
@@ -94,6 +98,25 @@ export function MenuItemForm({ initialData, onSubmit, onCancel }: MenuItemFormPr
         />
         <FormField
           control={form.control}
+          name="displayOrder"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Display Order</FormLabel>
+              <FormControl>
+                <Input
+                  type="number"
+                  step="1"
+                  {...field}
+                  onChange={(e) => field.onChange(parseInt(e.target.value))}
+                  disabled={isLoading}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
           name="price"
           render={({ field }) => (
             <FormItem>
@@ -101,7 +124,7 @@ export function MenuItemForm({ initialData, onSubmit, onCancel }: MenuItemFormPr
               <FormControl>
                 <Input
                   type="number"
-                  step="0.01"
+                  step="1"
                   {...field}
                   onChange={(e) => field.onChange(parseFloat(e.target.value))}
                   disabled={isLoading}
@@ -121,6 +144,7 @@ export function MenuItemForm({ initialData, onSubmit, onCancel }: MenuItemFormPr
                 <ImageUpload
                   onImageUpload={(url) => field.onChange(url)}
                   currentImage={field.value}
+                  
                 />
               </FormControl>
               <FormMessage />

@@ -5,61 +5,143 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { useSession } from 'next-auth/react'
 
 export function OnboardingPage({ isUpdate = false }) {
+  const { data: session } = useSession()
   const [restaurantName, setRestaurantName] = useState('')
   const [ownerName, setOwnerName] = useState('')
   const [location, setLocation] = useState('')
   const [phoneNumber, setPhoneNumber] = useState('')
   const [cuisineType, setCuisineType] = useState('')
+  const [isPublic, setIsPublic] = useState(false)
+  const [subdomain, setSubdomain] = useState('')
   const router = useRouter()
+  const userId = session?.user?.id
 
   useEffect(() => {
-    // Load existing data if available
-    const savedDetails = localStorage.getItem('restaurantDetails')
-    if (savedDetails) {
-      const parsedDetails = JSON.parse(savedDetails)
-      setRestaurantName(parsedDetails.restaurantName || '')
-      setOwnerName(parsedDetails.ownerName || '')
-      setLocation(parsedDetails.location || '')
-      setPhoneNumber(parsedDetails.phoneNumber || '')
-      setCuisineType(parsedDetails.cuisineType || '')
-    } else {
-      // If no saved data, initialize with empty strings
-      localStorage.setItem('restaurantDetails', JSON.stringify({
-        restaurantName: '',
-        ownerName: '',
-        location: '',
-        phoneNumber: '',
-        cuisineType: ''
-      }))
+    const fetchRestaurantData = async () => {
+      if (isUpdate && userId) {
+        try {
+          const response = await fetch(`/api/setRestroProfile?userId=${userId}`, {
+            method: 'GET'
+          })
+          const result = await response.json()
+          if (result.success) {
+            const restaurant = result.data
+            setRestaurantName(restaurant.name)
+            setOwnerName(restaurant.ownerName)
+            setLocation(restaurant.location)
+            setPhoneNumber(restaurant.phoneNumber)
+            setCuisineType(restaurant.cuisineType)
+            setIsPublic(restaurant.isPublic || false)
+            setSubdomain(restaurant.subDomain || '')
+          } else {
+            toast.error(result.message || 'Failed to fetch restaurant data')
+          }
+        } catch (error) {
+          console.error('Error fetching restaurant data:', error)
+          toast.error('An error occurred while fetching restaurant data')
+        }
+      }
     }
-  }, [])
 
-  const handleSubmit = (e: React.FormEvent) => {
+    fetchRestaurantData()
+  }, [isUpdate, userId])
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Save the data to local storage
-    localStorage.setItem('restaurantDetails', JSON.stringify({ restaurantName, ownerName, location, phoneNumber, cuisineType }))
     
-    if (isUpdate) {
-      toast.success('Profile updated successfully')
-    } else {
-      router.push('/create-menu')
+    const restaurantData = { 
+      userId: session?.user?.id,
+      name: restaurantName,
+      ownerName,
+      location,
+      phoneNumber,
+      cuisineType,
+    }
+
+    try {
+      const response = await fetch('/api/setRestroProfile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(restaurantData),
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        toast.success(isUpdate ? 'Profile updated successfully' : 'Profile created successfully')
+        if (!isUpdate) {
+          router.push('/create-menu')
+        }
+      } else {
+        toast.error(result.message || 'An error occurred')
+      }
+    } catch (error) {
+      console.error('Error submitting restaurant profile:', error)
+      toast.error('An error occurred while submitting the profile')
+    }
+  }
+
+  const handleTogglePublic = async () => {
+    try {
+      const response = await fetch('/api/publishMenu', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId: session?.user?.id, isPublic: !isPublic, action: 'toggle' }),
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        setIsPublic(!isPublic)
+        toast.success(`Menu is now ${!isPublic ? 'public' : 'private'}`)
+      } else {
+        toast.error(result.message || 'Failed to update public status')
+      }
+    } catch (error) {
+      console.error('Error toggling public status:', error)
+      toast.error('An error occurred while updating public status')
+    }
+  }
+
+  const handlePublish = async () => {
+    if (!isPublic || !subdomain) {
+      toast.error('Please make sure the menu is public and a subdomain is provided.')
+      return
+    }
+
+    try {
+      const response = await fetch('/api/publishMenu', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId: session?.user?.id, subdomain, action: 'publish' }),
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        toast.success('Menu published successfully!')
+      } else {
+        toast.error(result.message || 'Failed to publish menu')
+      }
+    } catch (error) {
+      console.error('Error publishing menu:', error)
+      toast.error('An error occurred while publishing the menu')
     }
   }
 
   const handleSkip = () => {
-    // Set default empty values in localStorage
-    localStorage.setItem('restaurantDetails', JSON.stringify({
-      restaurantName: '',
-      ownerName: '',
-      location: '',
-      phoneNumber: '',
-      cuisineType: ''
-    }))
-    
     if (!isUpdate) {
       router.push('/create-menu')
     }
@@ -132,6 +214,7 @@ export function OnboardingPage({ isUpdate = false }) {
               </SelectContent>
             </Select>
           </div>
+          
           <div className="flex space-x-4">
             <Button type="submit" className="flex-1 bg-[#4299e1] hover:bg-[#3182ce] text-white">
               {isUpdate ? 'Update Profile' : 'Complete Profile'}
@@ -142,6 +225,32 @@ export function OnboardingPage({ isUpdate = false }) {
               </Button>
             )}
           </div>
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="isPublic"
+              checked={isPublic}
+              onCheckedChange={handleTogglePublic}
+            />
+            <Label htmlFor="isPublic">Make Menu Public</Label>
+          </div>
+          {isPublic && (
+            <div>
+              <Label htmlFor="subdomain">Subdomain</Label>
+              <Input
+                id="subdomain"
+                type="text"
+                value={subdomain}
+                onChange={(e) => setSubdomain(e.target.value)}
+                placeholder="your-restaurant"
+                className="mt-1"
+              />
+            </div>
+          )}
+          {isPublic && subdomain && (
+            <Button type="button" onClick={handlePublish} className="mt-4 w-full bg-green-500 hover:bg-green-600 text-white">
+              Publish Menu
+            </Button>
+          )}
         </form>
         {!isUpdate && (
           <p className="mt-4 text-sm text-[#4a5568] text-center">
