@@ -42,7 +42,7 @@ export async function middleware(request: NextRequest) {
 
   // Determine the main domain and protocol
   const currentEnv = process.env.NODE_ENV;
-  const mainDomain = currentEnv === 'development' ? 'localhost:3000' : 'Qr_menu.com';
+  const mainDomain = currentEnv === 'development' ? 'localhost:3000' : process.env.NEXT_PUBLIC_APP_URL;
   const protocol = currentEnv === 'development' ? 'http' : 'https';
   const mainDomainUrl = `${protocol}://${mainDomain}`;
 
