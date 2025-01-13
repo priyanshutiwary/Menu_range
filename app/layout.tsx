@@ -16,8 +16,8 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Invoicesgen",
-  description: "Generate Invoice",
+  title: "MenuRange",
+  description: "Generate MenuRange",
 };
 
 export default function RootLayout({

@@ -716,7 +716,7 @@ export default function MenuCreator() {
         <div className="container mx-auto">
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-4xl font-bold text-[#2d3748]">
-              Restaurant Menu Creator
+              MenuRange
             </h1>
 
             <div className="flex items-center space-x-4">

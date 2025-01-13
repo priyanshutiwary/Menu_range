@@ -12,7 +12,7 @@ interface Business {
 async function verifyBusiness(subdomain: string) {
   try {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_APP_URL}/api/subdomainCheck?subdomain=${subdomain}`,
+      `${process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')}/api/subdomainCheck?subdomain=${subdomain}`,
       {
         method: 'GET',
         headers: {
